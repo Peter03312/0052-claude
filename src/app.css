@@ -1,0 +1,7 @@
+/* 全局基础样式（屏幕界面；打印样式独立在 print.css） */
+button {
+  font-family: inherit;
+}
+input, button {
+  font-family: inherit;
+}

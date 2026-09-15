@@ -1,0 +1,77 @@
+/* 打印专用样式：黑白友好，A4 横向 */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: #111827;
+  background: #fff;
+}
+.print-root { background: #fff; }
+.page {
+  page-break-after: always;
+  padding: 6mm;
+}
+.page:last-child { page-break-after: auto; }
+.print-title { font-size: 13pt; margin: 0 0 6mm; }
+.sleeve-sheet { display: flex; flex-direction: column; }
+.flap {
+  background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 3mm, #f3f4f6 3mm, #f3f4f6 6mm);
+  border: 1px dashed #6b7280;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9pt; color: #4b5563;
+}
+.flap.bottom { border-top: none; }
+.sleeve-cut { position: relative; border: 2px solid #111827; background: #fff; }
+.cut { position: absolute; width: 5mm; height: 5mm; }
+.cut.tl { top: -2px; left: -2px; border-top: 2px solid #111827; border-left: 2px solid #111827; }
+.cut.tr { top: -2px; right: -2px; border-top: 2px solid #111827; border-right: 2px solid #111827; }
+.cut.bl { bottom: -2px; left: -2px; border-bottom: 2px solid #111827; border-left: 2px solid #111827; }
+.cut.br { bottom: -2px; right: -2px; border-bottom: 2px solid #111827; border-right: 2px solid #111827; }
+.col-rule { position: absolute; top: 0; bottom: 0; border-right: 1px dashed #d1d5db; }
+.col-no { position: absolute; bottom: 1mm; right: 1mm; font-size: 8pt; color: #9ca3af; }
+.window-cut {
+  position: absolute; border: 2px dashed #111827;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 9pt;
+  background: repeating-linear-gradient(-45deg, #f9fafb, #f9fafb 2mm, #f3f4f6 2mm, #f3f4f6 4mm);
+}
+.window-cut small { font-size: 7pt; color: #6b7280; }
+.notes { font-size: 10pt; margin: 5mm 0 0; }
+.strip-ruler { position: relative; height: 7mm; border-bottom: 1px solid #111827; }
+.strip-cell { position: absolute; top: 0; height: 100%; border-right: 1px solid #d1d5db; }
+.slot-no { position: absolute; top: 0.5mm; left: 1mm; font-size: 7pt; color: #9ca3af; }
+.stop-tick { position: absolute; top: 0; right: -3mm; font-size: 7pt; color: #111827; font-weight: 700; }
+.strip-body { position: relative; border: 1px solid #111827; border-top: none; }
+.stop-line { position: absolute; top: 0; border-left: 2px solid #111827; }
+.printed-card {
+  position: absolute; border: 1.5px solid; border-radius: 1mm;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 1mm; overflow: hidden; background: #fff;
+}
+.printed-card b { font-size: 8pt; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.printed-card small { font-size: 6pt; color: #6b7280; }
+.printed-card.w0 { border-color: #111827; }
+.printed-card.w1 { border-color: #111827; border-style: double; }
+.printed-card.w2 { border-color: #111827; border-style: dotted; border-width: 2px; }
+.strip-glue {
+  position: absolute; left: -16mm; top: 0; width: 14mm;
+  background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 2mm, #f3f4f6 2mm, #f3f4f6 4mm);
+  border: 1px dashed #6b7280;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7pt; color: #4b5563; text-align: center;
+}
+@page { size: A4 landscape; margin: 10mm; }
+@media print {
+  .page { page-break-after: always; }
+  /* 条带较长时浏览器自动缩放到一页宽，避免刻线被裁掉 */
+  .strip-scroll {
+    overflow: visible;
+  }
+}
+/* 屏幕查看时给一个可读的最大宽度并横向滚动；打印时宽度不受限 */
+@media screen {
+  .print-root {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
