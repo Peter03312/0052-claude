@@ -209,6 +209,43 @@ test.describe('打印验收', () => {
     const bottoms = rects.map((r) => r.top + r.height);
     expect(Math.max(...bottoms)).toBeLessThanOrEqual(stripInfo.bodyHeight + 1);
   });
+
+  test('起点粘贴片在纸张安全区内（非负偏移），且与条带端头相邻可折粘', async ({ page }) => {
+    await fillSimpleStory(page);
+    await page.locator('[data-testid="solve-btn"]').click();
+    await page.locator('[data-testid="print-btn"]').click();
+
+    const frameEl = page.frameLocator('iframe[data-testid="print-frame"]');
+    await expect(frameEl.locator('.strip-glue')).toHaveCount(1);
+
+    const geometry = await frameEl.locator('.strip-sheet').first().evaluate((sheet) => {
+      const root = sheet as HTMLElement;
+      const glue = root.querySelector('.strip-glue') as HTMLElement;
+      const ruler = root.querySelector('.strip-ruler') as HTMLElement;
+      const body = root.querySelector('.strip-body') as HTMLElement;
+      const sheetRect = root.getBoundingClientRect();
+      return {
+        // 粘贴片相对整条 sheet 的位置：必须 >= 0（旧实现 left:-16mm 为负，会被纸边裁掉）
+        glueLeft: glue.getBoundingClientRect().left - sheetRect.left,
+        glueWidth: glue.getBoundingClientRect().width,
+        glueHeight: glue.getBoundingClientRect().height,
+        // 粘贴片右边与条带（尺子/横带）左边应紧邻（折痕虚线处），缝隙不超过 2px
+        gapToRuler: ruler.getBoundingClientRect().left - glue.getBoundingClientRect().right,
+        gapToBody: body.getBoundingClientRect().left - glue.getBoundingClientRect().right,
+        // 粘贴片与横带的竖向重叠（应跨住尺子+横带，便于包住端头）
+        glueTopVsBody: glue.getBoundingClientRect().top - body.getBoundingClientRect().top,
+        glueBottomVsBody: body.getBoundingClientRect().bottom - glue.getBoundingClientRect().bottom,
+      };
+    });
+
+    expect(geometry.glueLeft).toBeGreaterThanOrEqual(0);
+    expect(geometry.glueWidth).toBeGreaterThan(20); // 16mm 左右
+    expect(Math.abs(geometry.gapToRuler)).toBeLessThanOrEqual(2);
+    expect(Math.abs(geometry.gapToBody)).toBeLessThanOrEqual(2);
+    // 粘贴片应从尺子上方一直覆盖到横带底边
+    expect(geometry.glueTopVsBody).toBeLessThanOrEqual(2);
+    expect(geometry.glueBottomVsBody).toBeGreaterThanOrEqual(-2);
+  });
 });
 
 test.describe('草稿恢复', () => {

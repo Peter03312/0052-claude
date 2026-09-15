@@ -37,11 +37,16 @@ body {
 }
 .window-cut small { font-size: 7pt; color: #6b7280; }
 .notes { font-size: 10pt; margin: 5mm 0 0; }
+/* 条带：粘贴片在正常文档流内、位于槽 0 左侧，绝不使用负偏移，避免被纸边裁掉 */
+.strip-scroll { overflow: visible; }
+.strip-sheet { display: flex; align-items: flex-start; width: max-content; }
+.strip-main { display: flex; flex-direction: column; }
 .strip-ruler { position: relative; height: 7mm; border-bottom: 1px solid #111827; }
 .strip-cell { position: absolute; top: 0; height: 100%; border-right: 1px solid #d1d5db; }
 .slot-no { position: absolute; top: 0.5mm; left: 1mm; font-size: 7pt; color: #9ca3af; }
 .stop-tick { position: absolute; top: 0; right: -3mm; font-size: 7pt; color: #111827; font-weight: 700; }
-.strip-body { position: relative; border: 1px solid #111827; border-top: none; }
+/* 条带左边界由粘贴片的折线承担，避免双线 */
+.strip-body { position: relative; border: 1px solid #111827; border-top: none; border-left: none; }
 .stop-line { position: absolute; top: 0; border-left: 2px solid #111827; }
 .printed-card {
   position: absolute; border: 1.5px solid; border-radius: 1mm;
@@ -57,12 +62,15 @@ body {
 .printed-card.w0 { border-color: #111827; }
 .printed-card.w1 { border-color: #111827; border-style: double; }
 .printed-card.w2 { border-color: #111827; border-style: dotted; border-width: 2px; }
+/* 起点粘贴片：正常文档流内，实边可剪、与条带相接侧为折痕虚线 */
 .strip-glue {
-  position: absolute; left: -16mm; top: 0; width: 14mm;
+  flex: 0 0 auto;
   background: repeating-linear-gradient(45deg, #e5e7eb, #e5e7eb 2mm, #f3f4f6 2mm, #f3f4f6 4mm);
-  border: 1px dashed #6b7280;
+  border: 1.5px solid #111827;
+  border-right: 1.5px dashed #111827;
   display: flex; align-items: center; justify-content: center;
-  font-size: 7pt; color: #4b5563; text-align: center;
+  font-size: 7pt; color: #374151; text-align: center;
+  writing-mode: vertical-rl; letter-spacing: 1pt;
 }
 @page { size: A4 landscape; margin: 10mm; }
 @media print {

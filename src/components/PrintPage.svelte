@@ -79,42 +79,46 @@
     <h1 class="print-title">② 条带（所有牌印在同一横带上；剪下后穿进纸套，竖刻线对准纸套边缘时就是停点）</h1>
 
     <div class="strip-scroll">
-      <div class="strip-ruler" style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm">
-        {#each Array.from({ length: maxSlot + 1 }, (_, s) => s) as s}
-          <div class="strip-cell" style="left:{s * PRINT.stripColumnMm}mm;width:{PRINT.stripColumnMm}mm">
-            <span class="slot-no">{s}</span>
-            {#if stopSet.has(s)}
-              <span class="stop-tick">停{s}</span>
-            {/if}
+      <!-- 粘贴片与条带在同一文档流内横向相邻，绝不使用负偏移，保证打印不被纸边裁掉 -->
+      <div class="strip-sheet">
+        <div class="strip-glue" style="height:{7 + bandMm}mm;width:{PRINT.glueFlapMm}mm">
+          <span class="glue-label">起点涂胶折粘</span>
+        </div>
+        <div class="strip-main">
+          <div class="strip-ruler" style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm">
+            {#each Array.from({ length: maxSlot + 1 }, (_, s) => s) as s}
+              <div class="strip-cell" style="left:{s * PRINT.stripColumnMm}mm;width:{PRINT.stripColumnMm}mm">
+                <span class="slot-no">{s}</span>
+                {#if stopSet.has(s)}
+                  <span class="stop-tick">停{s}</span>
+                {/if}
+              </div>
+            {/each}
           </div>
-        {/each}
-      </div>
 
-      <!--
-        条带是单一横带：所有幕的牌都在与窗口等高的同一行内，只按槽位横向定位。
-        纸套抽拉时，stop+窗口列 与槽位一一对应；若按幕分行，后面幕的牌会沉到窗口下方看不见。
-      -->
-      <div
-        class="strip-body"
-        style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm;height:{bandMm}mm"
-      >
-        <!-- 停点刻线（贯穿整条横带） -->
-        {#each solution.stops as stop}
-          <div class="stop-line" style="left:{stop * PRINT.stripColumnMm}mm;height:{bandMm}mm"></div>
-        {/each}
-        <!-- 牌：统一 top，仅槽位决定横向位置 -->
-        {#each solution.assignments as a}
+          <!--
+            条带是单一横带：所有幕的牌都在与窗口等高的同一行内，只按槽位横向定位。
+            纸套抽拉时，stop+窗口列 与槽位一一对应；若按幕分行，后面幕的牌会沉到窗口下方看不见。
+          -->
           <div
-            class="printed-card w{a.window}"
-            style="left:{a.slot * PRINT.stripColumnMm + 0.5}mm;top:0.5mm;width:{PRINT.stripColumnMm - 1}mm;height:{bandMm - 1}mm;font-size:{fontSizeFor(textOf(a.actIndex, a.cardIndex))}pt"
+            class="strip-body"
+            style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm;height:{bandMm}mm"
           >
-            <b>{textOf(a.actIndex, a.cardIndex)}</b>
-            <small>{a.slot}槽·第{a.actIndex + 1}幕</small>
+            <!-- 停点刻线（贯穿整条横带） -->
+            {#each solution.stops as stop}
+              <div class="stop-line" style="left:{stop * PRINT.stripColumnMm}mm;height:{bandMm}mm"></div>
+            {/each}
+            <!-- 牌：统一 top，仅槽位决定横向位置 -->
+            {#each solution.assignments as a}
+              <div
+                class="printed-card w{a.window}"
+                style="left:{a.slot * PRINT.stripColumnMm + 0.5}mm;top:0.5mm;width:{PRINT.stripColumnMm - 1}mm;height:{bandMm - 1}mm;font-size:{fontSizeFor(textOf(a.actIndex, a.cardIndex))}pt"
+              >
+                <b>{textOf(a.actIndex, a.cardIndex)}</b>
+                <small>{a.slot}槽·第{a.actIndex + 1}幕</small>
+              </div>
+            {/each}
           </div>
-        {/each}
-        <!-- 起点粘贴区（与横带同高，在槽 0 左侧） -->
-        <div class="strip-glue" style="height:{bandMm}mm">
-          起点<br />粘贴
         </div>
       </div>
     </div>
@@ -123,6 +127,8 @@
       <li>停点刻线依次在槽 {solution.stops.join('、')}；把“停 0”刻线对准纸套左缘时，恰好显示第 1 幕。</li>
       <li>所有牌都印在与纸套窗口等高的<b>同一横带</b>上；每个槽只印一张牌；
         抽拉时下一幕才出现，上一幕会被纸套遮住。</li>
+      <li>左端斜纹小片是<b>起点粘贴片</b>（已印在纸张安全区内，不会被裁掉）：
+        沿实线剪下，在它与条带之间的<b>虚线折痕</b>处向后折 180°，涂胶后包住条带端头压平即可粘接。</li>
       <li>若条带比一页纸长：打印时在系统对话框选“缩放以适合页面”，
         或把打印出的两段沿槽位数字对齐、用透明胶在背面接成长条。</li>
     </ul>
@@ -209,6 +215,15 @@
   .strip-scroll {
     overflow: visible;
   }
+  .strip-sheet {
+    display: flex;
+    align-items: flex-start;
+    width: max-content;
+  }
+  .strip-main {
+    display: flex;
+    flex-direction: column;
+  }
   .strip-ruler {
     position: relative;
     height: 7mm;
@@ -239,11 +254,31 @@
     position: relative;
     border: 1px solid #111827;
     border-top: none;
+    border-left: none; /* 左边界由粘贴片折线承担 */
   }
   .stop-line {
     position: absolute;
     top: 0;
     border-left: 2px solid #1d4ed8;
+  }
+  .strip-glue {
+    flex: 0 0 auto;
+    background: repeating-linear-gradient(
+      45deg, #e5e7eb, #e5e7eb 2mm, #f3f4f6 2mm, #f3f4f6 4mm
+    );
+    border: 1.5px solid #111827;
+    border-right: 1.5px dashed #111827; /* 与条带相接处为折痕虚线 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 7pt;
+    color: #374151;
+    text-align: center;
+    writing-mode: vertical-rl;
+    letter-spacing: 1pt;
+  }
+  .glue-label {
+    writing-mode: vertical-rl;
   }
   .printed-card {
     position: absolute;
@@ -274,22 +309,6 @@
   .printed-card.w0 { border-color: #3b82f6; }
   .printed-card.w1 { border-color: #059669; }
   .printed-card.w2 { border-color: #d97706; }
-  .strip-glue {
-    position: absolute;
-    left: -16mm;
-    top: 0;
-    width: 14mm;
-    background: repeating-linear-gradient(
-      45deg, #e5e7eb, #e5e7eb 2mm, #f3f4f6 2mm, #f3f4f6 4mm
-    );
-    border: 1px dashed #6b7280;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 7pt;
-    color: #4b5563;
-    text-align: center;
-  }
   @media print {
     .page {
       page-break-after: always;

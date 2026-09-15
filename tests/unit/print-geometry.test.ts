@@ -15,6 +15,13 @@ describe('打印条带几何：所有牌在同一横带', () => {
     expect(PRINT).not.toHaveProperty('cardRowMm');
   });
 
+  it('起点粘贴片有正宽度（打印时在纸张安全区内，不依赖负偏移）', () => {
+    expect(PRINT.glueFlapMm).toBeGreaterThan(0);
+    // 粘贴片宽度合理（便于手折手粘），且整个“粘贴片 + 6 列纸套”宽不超过 A4 横向可打印宽度
+    expect(PRINT.glueFlapMm).toBeGreaterThanOrEqual(10);
+    expect(PRINT.glueFlapMm + 6 * PRINT.sleeveColumnMm).toBeLessThan(277);
+  });
+
   for (const actCount of [2, 3, 4, 5, 6]) {
     it(`${actCount} 幕故事：每张牌只按槽位横向定位，纵向都在横带顶`, () => {
       const draft = makeDraft(1,
