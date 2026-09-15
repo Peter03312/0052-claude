@@ -45,11 +45,15 @@ body {
 .stop-line { position: absolute; top: 0; border-left: 2px solid #111827; }
 .printed-card {
   position: absolute; border: 1.5px solid; border-radius: 1mm;
-  display: flex; flex-direction: column; justify-content: center;
-  padding: 0 1mm; overflow: hidden; background: #fff;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 0.5mm; padding: 1mm 0.5mm; overflow: hidden; background: #fff;
 }
-.printed-card b { font-size: 8pt; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
-.printed-card small { font-size: 6pt; color: #6b7280; }
+/* 字号由元素内联样式按字数自适应；长句允许在槽内换行，确保台词完整可见 */
+.printed-card b {
+  font-weight: 700; line-height: 1.1; text-align: center;
+  word-break: break-all; overflow-wrap: anywhere;
+}
+.printed-card small { font-size: 5pt; color: #6b7280; line-height: 1; }
 .printed-card.w0 { border-color: #111827; }
 .printed-card.w1 { border-color: #111827; border-style: double; }
 .printed-card.w2 { border-color: #111827; border-style: dotted; border-width: 2px; }

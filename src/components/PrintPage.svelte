@@ -11,10 +11,15 @@
 
   $: maxSlot = Math.max(...solution.assignments.map((a) => a.slot));
   $: stopSet = new Set(solution.stops);
-  $: windowColSet = new Set(solution.windowColumns);
+  $: bandMm = PRINT.stripBandMm;
 
-  function cardBySlot(slot: number) {
-    return solution.assignments.find((a) => a.slot === slot);
+  /** 牌面字号：按字数自适应，保证长句也尽量完整显示在槽内 */
+  function fontSizeFor(text: string): number {
+    const n = text.length;
+    if (n <= 6) return 9;
+    if (n <= 9) return 7.5;
+    if (n <= 13) return 6.5;
+    return 5.5;
   }
 
   function textOf(ai: number, ci: number): string {
@@ -71,7 +76,7 @@
 
   <!-- 第 2 页：条带 -->
   <section class="page">
-    <h1 class="print-title">② 条带（剪下后穿进纸套；竖刻线对准纸套边缘时就是停点）</h1>
+    <h1 class="print-title">② 条带（所有牌印在同一横带上；剪下后穿进纸套，竖刻线对准纸套边缘时就是停点）</h1>
 
     <div class="strip-scroll">
       <div class="strip-ruler" style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm">
@@ -85,26 +90,30 @@
         {/each}
       </div>
 
+      <!--
+        条带是单一横带：所有幕的牌都在与窗口等高的同一行内，只按槽位横向定位。
+        纸套抽拉时，stop+窗口列 与槽位一一对应；若按幕分行，后面幕的牌会沉到窗口下方看不见。
+      -->
       <div
         class="strip-body"
-        style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm;height:{draft.acts.length * PRINT.cardRowMm + 10}mm"
+        style="width:{(maxSlot + 1) * PRINT.stripColumnMm}mm;height:{bandMm}mm"
       >
-        <!-- 停点刻线 -->
+        <!-- 停点刻线（贯穿整条横带） -->
         {#each solution.stops as stop}
-          <div class="stop-line" style="left:{stop * PRINT.stripColumnMm}mm;height:100%"></div>
+          <div class="stop-line" style="left:{stop * PRINT.stripColumnMm}mm;height:{bandMm}mm"></div>
         {/each}
-        <!-- 牌 -->
+        <!-- 牌：统一 top，仅槽位决定横向位置 -->
         {#each solution.assignments as a}
           <div
             class="printed-card w{a.window}"
-            style="left:{a.slot * PRINT.stripColumnMm + 1}mm;top:{a.actIndex * PRINT.cardRowMm + 4}mm;width:{PRINT.stripColumnMm - 2}mm;height:{PRINT.cardRowMm}mm"
+            style="left:{a.slot * PRINT.stripColumnMm + 0.5}mm;top:0.5mm;width:{PRINT.stripColumnMm - 1}mm;height:{bandMm - 1}mm;font-size:{fontSizeFor(textOf(a.actIndex, a.cardIndex))}pt"
           >
             <b>{textOf(a.actIndex, a.cardIndex)}</b>
-            <small>第{a.actIndex + 1}幕·槽{a.slot}</small>
+            <small>{a.slot}槽·第{a.actIndex + 1}幕</small>
           </div>
         {/each}
-        <!-- 起点粘贴区 -->
-        <div class="strip-glue" style="height:{draft.acts.length * PRINT.cardRowMm + 10}mm">
+        <!-- 起点粘贴区（与横带同高，在槽 0 左侧） -->
+        <div class="strip-glue" style="height:{bandMm}mm">
           起点<br />粘贴
         </div>
       </div>
@@ -112,7 +121,8 @@
 
     <ul class="notes">
       <li>停点刻线依次在槽 {solution.stops.join('、')}；把“停 0”刻线对准纸套左缘时，恰好显示第 1 幕。</li>
-      <li>每个槽只印一张牌；抽拉时下一幕才出现，上一幕会被纸套遮住。</li>
+      <li>所有牌都印在与纸套窗口等高的<b>同一横带</b>上；每个槽只印一张牌；
+        抽拉时下一幕才出现，上一幕会被纸套遮住。</li>
       <li>若条带比一页纸长：打印时在系统对话框选“缩放以适合页面”，
         或把打印出的两段沿槽位数字对齐、用透明胶在背面接成长条。</li>
     </ul>
@@ -241,20 +251,25 @@
     border-radius: 1mm;
     display: flex;
     flex-direction: column;
+    align-items: center;
     justify-content: center;
-    padding: 0 1mm;
+    gap: 0.5mm;
+    padding: 1mm 0.5mm;
     overflow: hidden;
     background: #fff;
   }
   .printed-card b {
-    font-size: 8pt;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    /* 字号由内联样式按字数自适应；允许换行以保证长句完整可见 */
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    word-break: break-all;
+    overflow-wrap: anywhere;
   }
   .printed-card small {
-    font-size: 6pt;
+    font-size: 5pt;
     color: #6b7280;
+    line-height: 1;
   }
   .printed-card.w0 { border-color: #3b82f6; }
   .printed-card.w1 { border-color: #059669; }

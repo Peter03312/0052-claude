@@ -11,7 +11,7 @@
     "test:unit": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "verify": "./verify.sh"
+    "verify": "node verify.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.1",

@@ -1,6 +1,12 @@
-# 只运行静态 web 服务：先在 node 镜像里构建，再用 nginx 托管 dist。
-# 宿主端口可用 APP_PORT 覆盖：
+# Compose 只运行静态 web 服务；verify 是一次性验收任务（放在 verify profile 下）。
+#
+# 运行网站：
+#   docker compose up --build
 #   APP_PORT=9000 docker compose up --build
+#
+# 一次性验收（类型检查 → 单测 → 构建 → 首页冒烟），跑完即退出：
+#   docker compose --profile verify run --rm verify
+#
 services:
   web:
     build:
@@ -12,3 +18,15 @@ services:
       # 默认 8080，可用 APP_PORT 覆盖宿主侧端口
       - "${APP_PORT:-8080}:80"
     restart: unless-stopped
+
+  # 一次性验收：默认 profile 不启动，需显式 --profile verify
+  verify:
+    profiles: ["verify"]
+    image: pull-story-cards-verify
+    build:
+      context: .
+      dockerfile: Dockerfile.verify
+    container_name: pull-story-cards-verify
+    # node verify.mjs 是镜像默认命令；跑完容器退出
+    command: ["node", "verify.mjs"]
+    # 不暴露端口：冒烟服务只在容器内 127.0.0.1 起停

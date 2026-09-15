@@ -1,0 +1,14 @@
+# 一次性验收镜像：安装全部依赖（含 devDependencies），运行 node verify.mjs。
+# 与 Dockerfile（产出仅含 nginx 的运行镜像）分开，互不影响。
+FROM node:20-alpine
+
+WORKDIR /app
+
+# 优先利用层缓存安装依赖
+COPY package.json package-lock.json* ./
+RUN npm ci --no-audit --no-fund
+
+COPY . .
+
+# verify.mjs：类型检查 → Vitest 单测 → 生产构建 → 容器内首页冒烟
+CMD ["node", "verify.mjs"]

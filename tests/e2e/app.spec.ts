@@ -164,6 +164,51 @@ test.describe('打印验收', () => {
       !u.startsWith('http://127.0.0.1:4173') && !u.startsWith('about:'));
     expect(external).toEqual([]);
   });
+
+  test('三幕故事：所有台词牌都印在同一横带上（后面幕的牌不沉到窗口下方）', async ({ page }) => {
+    // 构造 3 幕故事
+    await page.locator('[data-testid="add-act"]').click();
+    await page.locator('[data-testid="text-0-0"]').fill('第一幕的台词');
+    await page.locator('[data-testid="text-1-0"]').fill('第二幕的台词');
+    await page.locator('[data-testid="text-2-0"]').fill('第三幕的台词');
+    await page.locator('[data-testid="solve-btn"]').click();
+    await expect(page.locator('[data-testid="proof-ok"]')).toBeVisible();
+    await page.locator('[data-testid="print-btn"]').click();
+
+    const frameEl = page.frameLocator('iframe[data-testid="print-frame"]');
+    await expect(frameEl.locator('.printed-card')).toHaveCount(3);
+
+    // 回归点：所有牌的 top 必须一致（在与窗口等高的同一横带内），
+    // 旧实现按幕分行，第 3 幕的 top 会是第 1 幕的约 3 倍。
+    const rects = await frameEl.locator('.printed-card').evaluateAll(
+      (cards) => cards.map((c) => {
+        const el = c as HTMLElement;
+        return { top: el.offsetTop, height: el.offsetHeight };
+      }),
+    );
+    expect(rects.length).toBe(3);
+    expect(new Set(rects.map((r) => r.top)).size).toBe(1);
+    // 全部牌从横带顶部开始（旧实现第 3 幕 top ≈ 2× 牌高）
+    expect(rects[0].top).toBeLessThanOrEqual(rects[0].height * 0.2);
+
+    // 条带高度只够一行牌（旧实现 3 幕时约为 3 行）
+    const stripInfo = await frameEl.locator('.strip-body').first().evaluate(
+      (el) => {
+        const body = el as HTMLElement;
+        const firstCard = body.querySelector('.printed-card') as HTMLElement;
+        return {
+          bodyHeight: body.offsetHeight,
+          cardHeight: firstCard.offsetHeight,
+        };
+      },
+    );
+    expect(stripInfo.bodyHeight).toBeLessThanOrEqual(stripInfo.cardHeight * 1.3);
+    expect(stripInfo.bodyHeight).toBeGreaterThanOrEqual(stripInfo.cardHeight * 0.95);
+
+    // 每张牌都完整落在横带高度内（底边不超出条带）
+    const bottoms = rects.map((r) => r.top + r.height);
+    expect(Math.max(...bottoms)).toBeLessThanOrEqual(stripInfo.bodyHeight + 1);
+  });
 });
 
 test.describe('草稿恢复', () => {

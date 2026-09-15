@@ -46,11 +46,16 @@ npm run preview   # 本地预览构建产物
 ### 一键验收
 
 ```bash
-./verify.sh
+npm run verify      # 等价于 node verify.mjs（跨平台，Windows/macOS/Linux 均可）
+# 或
+./verify.sh         # 薄封装，内部仍调用 node verify.mjs
+# 或在 Docker 里一次性运行：
+docker compose --profile verify run --rm --build verify
 ```
 
 依次执行：TypeScript 类型检查 → Vitest 单元测试 → 生产构建 → 静态服务器首页冒烟
-（并检查首页没有外部资源引用）。
+（自动选择空闲端口，并检查首页没有外部资源引用）。`verify` 是放在 `verify` profile 下的
+**一次性** Compose 服务，跑完即退出；默认 `docker compose up` 仍然只运行静态 web。
 
 ### 测试
 
@@ -89,6 +94,8 @@ APP_PORT=9000 docker compose up --build   # 覆盖宿主端口
 - **打印制作页**：隐藏的同源 `srcdoc` iframe 调起浏览器打印，含
   - 纸套页：外框**裁切线角标**、窗口挖空虚线、上下**粘贴区**、列号；
   - 条带页：逐槽刻度、每张牌的印刷位置、起点**粘贴区**、全部**停点刻线**。
+    所有幕的牌都印在**与纸套窗口等高的同一横带**上、只按槽位横向定位，
+    因此无论几幕，抽拉到对应停点时台词都在窗口可见高度内（不会沉到窗口下方）。
   - 打印帧样式为黑白友好，A4 横向，两页。
 - **草稿恢复**：刷新/重开后自动恢复上次内容并显示温和提示条；清空浏览器站点数据即重置。
 

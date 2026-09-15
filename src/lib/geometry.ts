@@ -27,7 +27,8 @@ export const PRINT = {
   sleeveColumnMm: 22,
   sleeveHeightMm: 34,
   stripColumnMm: 22,
-  cardRowMm: 12,
+  /** 条带是穿进纸套的单一横带，高度与窗口格一致；所有幕的牌都在这一行上 */
+  stripBandMm: 22,
   glueFlapMm: 16,
   cutTickMm: 5
 };
